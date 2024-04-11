@@ -1,38 +1,64 @@
+@Library('mylibrary')_
 pipeline
 {
-    agent any
+    agent any 
     stages
     {
-        stage('ContinuousDownload')
+        stage('ContDownload_master')
         {
             steps
             {
-                git 'https://github.com/lavanya1330/maven.git'
+                script
+                {
+                    cicd.gitDownload("maven")
+
+                }
             }
         }
-        stage('ContinuousBuild')
+        stage('ContBuild_master')
         {
             steps
             {
-                sh 'mvn package'
+                script
+                {
+                    cicd.mavenBuild()
+
+                }
             }
         }
-        stage('ContinuousDeployment')
+        stage('ContDeployment_master')
         {
             steps
             {
-            deploy adapters: [tomcat9(credentialsId: '7461fe0e-0ff9-4ec7-8eff-3e433f40fd1d', path: '', url: 'http://172.31.94.45:8080')], contextPath: 'Testapp', war: '**/*.war'
+                script
+                {
+                           cicd.DeployTomcat("DeclarativePipelinewithSharedlibraries","172.31.94.45","mytestapp")
+   
+                }  
             }
         }
-        stage('ContinuousTesting')
+        stage('ContTesting_master')
         {
             steps
             {
-                git 'https://github.com/lavanya1330/functionaltesting.git'
-        
-                sh 'java -jar /var/lib/jenkins/workspace/DeclarativePipeline/testing.jar'
+                script
+                {
+                     cicd.gitDownload("FunctionalTesting")
+                     cicd.RunSelenium("DeclarativePipelinewithSharedlibraries")
+
+                }
             }
         }
-       
+        stage('ContDelivery_master')
+        {
+            steps
+            {
+                script
+                {
+                             cicd.DeployTomcat("DeclarativePipelinewithSharedlibraries","172.31.95.78","myprodapp")
+
+                }
+            }
+        }
     }
 }
